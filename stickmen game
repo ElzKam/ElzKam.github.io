@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Player Stickman Chase</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            margin: 20px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #f1c40f;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .instructions {
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            background-color: #ecf0f1;
+            border: 4px solid #f1c40f;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            cursor: none;
+            max-width: 100%;
+        }
+        
+        .user-info {
+            font-size: 0.7rem;
+            color: #95a5a6;
+            margin-top: 10px;
+            word-wrap: break-word;
+        }
+
+        .score-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: #bdc3c7;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            background-color: #2c3e50;
+            border-radius: 5px;
+        }
+        
+        .scores {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            font-size: 1.5rem;
+        }
+
+        .score {
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        #player1-score {
+            background-color: #e74c3c;
+        }
+
+        #player2-score {
+            background-color: #3498db;
+        }
+        
+        .role-indicator {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .timer-box {
+            padding: 10px 20px;
+            border-radius: 10px;
+            background-color: #1abc9c;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            color: #2ecc71;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .hidden {
+            display: none;
+        }
+        
+        .winner-screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+        }
+        
+        .winner-text {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            background-color: #2ecc71;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stickman Chase</h1>
+        <div class="instructions">
+            <p>Player 1: WASD keys | Player 2: Arrow keys</p>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="score-section">
+            <div class="section-title">Current Game</div>
+            <div class="scores">
+                <div id="player1-score" class="score">
+                    <span id="p1-score-val">Player 1: 0</span>
+                    <div id="p1-role" class="role-indicator"></div>
+                </div>
+                <div id="timer" class="timer-box">10s</div>
+                <div id="player2-score" class="score">
+                    <span id="p2-score-val">Player 2: 0</span>
+                    <div id="p2-role" class="role-indicator"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="score-section">
+            <div class="section-title">All-Time Scores</div>
+            <div class="scores">
+                <div id="all-time-p1" class="score">
+                    <span id="all-time-p1-val">Player 1: 0</span>
+                </div>
+                <div id="all-time-p2" class="score">
+                    <span id="all-time-p2-val">Player 2: 0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="user-info">User ID: <span id="user-id"></span></div>
+        
+        <div id="winner-screen" class="winner-screen">
+            <div class="winner-text" id="winner-message"></div>
+            <button id="restart-button">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Setup ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        let userId = null;
+        let authReady = false;
+
+        // --- UI Elements ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const winnerScreen = document.getElementById('winner-screen');
+        const winnerMessage = document.getElementById('winner-message');
+        const restartButton = document.getElementById('restart-button');
+        const timerEl = document.getElementById('timer');
+        const p1ScoreEl = document.getElementById('p1-score-val');
+        const p2ScoreEl = document.getElementById('p2-score-val');
+        const p1RoleEl = document.getElementById('p1-role');
+        const p2RoleEl = document.getElementById('p2-role');
+        const allTimeP1El = document.getElementById('all-time-p1-val');
+        const allTimeP2El = document.getElementById('all-time-p2-val');
+        const userIdEl = document.getElementById('user-id');
+
+        // --- Game State Variables ---
+        const stickmanRadius = 15;
+        const stickmanSpeed = 5;
+        const roundTime = 10;
+        const winningScore = 5;
+        let player1Score = 0;
+        let player2Score = 0;
+        let isGameOver = false;
+        let currentChaser = null;
+        let currentRunner = null;
+        let timerInterval;
+
+        let player1 = {
+            x: 0, y: 0, color: '#e74c3c', keys: { w: false, a: false, s: false, d: false }
+        };
+
+        let player2 = {
+            x: 0, y: 0, color: '#3498db', keys: { up: false, left: false, down: false, right: false }
+        };
+        
+        // --- Firestore Functions ---
+        const getScoresDocRef = (uid) => {
+            return doc(db, 'artifacts', appId, 'users', uid, 'game_scores', 'all_time_scores');
+        };
+
+        const updateAllTimeScores = async (winningPlayer) => {
+            if (!authReady) return;
+            try {
+                const docRef = getScoresDocRef(userId);
+                const docSnap = await getDoc(docRef);
+                
+                let currentP1 = 0;
+                let currentP2 = 0;
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentP1 = data.player1_score || 0;
+                    currentP2 = data.player2_score || 0;
+                }
+
+                if (winningPlayer === player1) {
+                    currentP1++;
+                } else {
+                    currentP2++;
+                }
+
+                await setDoc(docRef, { player1_score: currentP1, player2_score: currentP2 });
+
+            } catch (error) {
+                console.error("Error updating all-time scores:", error);
+            }
+        };
+
+        // --- Game Utility Functions ---
+        function drawStickman(x, y, color) {
+            ctx.beginPath();
+            ctx.arc(x, y - stickmanRadius, stickmanRadius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y + 40);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x - 20, y + 20);
+            ctx.lineTo(x + 20, y + 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y + 40);
+            ctx.lineTo(x - 15, y + 70);
+            ctx.moveTo(x, y + 40);
+            ctx.lineTo(x + 15, y + 70);
+            ctx.stroke();
+        }
+
+        function showWinner(winnerName, winnerColor, winningPlayer) {
+            isGameOver = true;
+            winnerMessage.textContent = `${winnerName} Wins!`;
+            winnerMessage.style.color = winnerColor;
+            winnerScreen.style.display = 'flex';
+            clearInterval(timerInterval);
+            updateAllTimeScores(winningPlayer);
+        }
+
+        function updateScoreboard() {
+            p1ScoreEl.textContent = `Player 1: ${player1Score}`;
+            p2ScoreEl.textContent = `Player 2: ${player2Score}`;
+            p1RoleEl.textContent = currentChaser === player1 ? 'Chaser' : 'Runner';
+            p2RoleEl.textContent = currentChaser === player2 ? 'Chaser' : 'Runner';
+        }
+        
+        function resetRound() {
+            player1.x = canvas.width / 4;
+            player1.y = canvas.height / 2;
+            player2.x = canvas.width * 3 / 4;
+            player2.y = canvas.height / 2;
+            clearInterval(timerInterval);
+            startTimer();
+            updateScoreboard();
+            const tempChaser = currentChaser;
+            currentChaser = currentRunner;
+            currentRunner = tempChaser;
+        }
+
+        function startGame() {
+            player1Score = 0;
+            player2Score = 0;
+            isGameOver = false;
+            winnerScreen.style.display = 'none';
+            currentChaser = player2;
+            currentRunner = player1;
+            resetRound();
+            gameLoop();
+        }
+        
+        function startTimer() {
+            let timeLeft = roundTime;
+            timerEl.textContent = `${timeLeft}s`;
+            
+            timerInterval = setInterval(() => {
+                if (isGameOver) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                timeLeft--;
+                timerEl.textContent = `${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    currentRunner === player1 ? player1Score++ : player2Score++;
+                    if (player1Score >= winningScore) {
+                        showWinner('Player 1', player1.color, player1);
+                    } else if (player2Score >= winningScore) {
+                        showWinner('Player 2', player2.color, player2);
+                    } else {
+                        resetRound();
+                    }
+                }
+            }, 1000);
+        }
+        
+        // --- Game Logic ---
+        function update() {
+            if (isGameOver) return;
+
+            // Player 1 Movement (WASD)
+            if (player1.keys.w) player1.y -= stickmanSpeed;
+            if (player1.keys.s) player1.y += stickmanSpeed;
+            if (player1.keys.a) player1.x -= stickmanSpeed;
+            if (player1.keys.d) player1.x += stickmanSpeed;
+
+            // Player 2 Movement (Arrow Keys)
+            if (player2.keys.up) player2.y -= stickmanSpeed;
+            if (player2.keys.down) player2.y += stickmanSpeed;
+            if (player2.keys.left) player2.x -= stickmanSpeed;
+            if (player2.keys.right) player2.x += stickmanSpeed;
+
+            // Collision Detection
+            const dx = currentChaser.x - currentRunner.x;
+            const dy = currentChaser.y - currentRunner.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 50) { 
+                currentChaser === player1 ? player1Score++ : player2Score++;
+                
+                if (player1Score >= winningScore) {
+                    showWinner('Player 1', player1.color, player1);
+                } else if (player2Score >= winningScore) {
+                    showWinner('Player 2', player2.color, player2);
+                } else {
+                    resetRound();
+                }
+            }
+
+            // Boundary checks
+            const players = [player1, player2];
+            players.forEach(p => {
+                p.x = Math.max(stickmanRadius + 5, Math.min(canvas.width - stickmanRadius - 5, p.x));
+                p.y = Math.max(stickmanRadius + 5, Math.min(canvas.height - stickmanRadius - 5, p.y));
+            });
+        }
+
+        function draw() {
+            if (isGameOver) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawStickman(player1.x, player1.y, player1.color);
+            drawStickman(player2.x, player2.y, player2.color);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'w': player1.keys.w = true; break;
+                case 'a': player1.keys.a = true; break;
+                case 's': player1.keys.s = true; break;
+                case 'd': player1.keys.d = true; break;
+                case 'ArrowUp': player2.keys.up = true; break;
+                case 'ArrowLeft': player2.keys.left = true; break;
+                case 'ArrowDown': player2.keys.down = true; break;
+                case 'ArrowRight': player2.keys.right = true; break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch (e.key) {
+                case 'w': player1.keys.w = false; break;
+                case 'a': player1.keys.a = false; break;
+                case 's': player1.keys.s = false; break;
+                case 'd': player1.keys.d = false; break;
+                case 'ArrowUp': player2.keys.up = false; break;
+                case 'ArrowLeft': player2.keys.left = false; break;
+                case 'ArrowDown': player2.keys.down = false; break;
+                case 'ArrowRight': player2.keys.right = false; break;
+            }
+        });
+
+        restartButton.addEventListener('click', startGame);
+
+        // --- Main Initialization ---
+        window.onload = function() {
+            startGame();
+            
+            // Firebase Auth
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    authReady = true;
+                    userIdEl.textContent = userId;
+                    const scoresDocRef = getScoresDocRef(userId);
+
+                    onSnapshot(scoresDocRef, (doc) => {
+                        if (doc.exists()) {
+                            const data = doc.data();
+                            allTimeP1El.textContent = `Player 1: ${data.player1_score || 0}`;
+                            allTimeP2El.textContent = `Player 2: ${data.player2_score || 0}`;
+                        } else {
+                            allTimeP1El.textContent = `Player 1: 0`;
+                            allTimeP2El.textContent = `Player 2: 0`;
+                        }
+                    }, (error) => {
+                        console.error("Error listening to all-time scores:", error);
+                    });
+                } else {
+                    if (initialAuthToken) {
+                        try {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } catch (error) {
+                            console.error("Custom token sign-in failed, signing in anonymously:", error);
+                            await signInAnonymously(auth);
+                        }
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
+
